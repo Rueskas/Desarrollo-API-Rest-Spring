@@ -1,5 +1,6 @@
 package com.iessanvicente.rest.controllers;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +16,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.iessanvicente.rest.converter.ProductoDTOConverter;
 import com.iessanvicente.rest.dto.CreateProductoDTO;
+import com.iessanvicente.rest.dto.ProductoDTO;
+import com.iessanvicente.rest.error.ApiError;
+import com.iessanvicente.rest.error.ProductoNotFoundException;
 import com.iessanvicente.rest.models.Categoria;
 import com.iessanvicente.rest.models.CategoriaRepositorio;
 import com.iessanvicente.rest.models.Producto;
@@ -40,14 +46,14 @@ public class ProductoController {
 	 * @return
 	 */
 	@GetMapping("/producto")
-	public ResponseEntity<?> obtenerTodos() {
+	public List<ProductoDTO> obtenerTodos() {
 		List<Producto> products = productoRepositorio.findAll();
 		if(products.isEmpty()) {
-			return ResponseEntity.notFound().build();
+			throw new ProductoNotFoundException(null);
 		} else {
-			return ResponseEntity.ok(products.stream()
+			return products.stream()
 					.map(dtoConverter::convertToDto)
-					.collect(Collectors.toList()));
+					.collect(Collectors.toList());
 		}
 	}
 
@@ -58,13 +64,16 @@ public class ProductoController {
 	 * @return Null si no encuentra el producto
 	 */
 	@GetMapping("/producto/{id}")
-	public ResponseEntity<?> obtenerUno(@PathVariable Long id) {
+	public ProductoDTO obtenerUno(@PathVariable Long id) {
+		/*
 		Producto p = productoRepositorio.findById(id).orElse(null);
 		if(p == null) {
 			return ResponseEntity.notFound().build();
 		} else {
 			return ResponseEntity.ok(dtoConverter.convertToDto(p));
 		}
+		*/
+		return dtoConverter.convertToDto(productoRepositorio.findById(id).orElseThrow(() -> new ProductoNotFoundException(id)));
 	}
 
 	/**
@@ -74,7 +83,7 @@ public class ProductoController {
 	 * @return producto insertado
 	 */
 	@PostMapping("/producto")
-	public ResponseEntity<?> nuevoProducto(@RequestBody CreateProductoDTO nuevo) {
+	public ProductoDTO nuevoProducto(@RequestBody CreateProductoDTO nuevo) {
 		
 		if(categoriaRepositorio.existsById(nuevo.getCategoriaId())) {
 			Categoria c = categoriaRepositorio.findById(nuevo.getCategoriaId()).orElse(null);
@@ -82,15 +91,12 @@ public class ProductoController {
 			Producto p = new Producto(null, nuevo.getNombre(), nuevo.getPrecio(), c);
 			Producto result = productoRepositorio.save(p);
 			if(result != null) {
-				return ResponseEntity.status(HttpStatus.CREATED)
-						.body(dtoConverter.convertToDto(result));
-			} else {
-				return ResponseEntity.badRequest().build();
+				return dtoConverter.convertToDto(result);
 			}
 		} else {
-			return ResponseEntity.notFound().build();
+			throw new ProductoNotFoundException(nuevo.getCategoriaId());
 		}
-		
+		return null;
 	}
 
 	/**
@@ -100,16 +106,15 @@ public class ProductoController {
 	 * @return
 	 */
 	@PutMapping("/producto/{id}")
-	public ResponseEntity<?> editarProducto(@RequestBody Producto editar, @PathVariable Long id) {
+	public ProductoDTO editarProducto(@RequestBody Producto editar, @PathVariable Long id) {
 		return productoRepositorio.findById(id).map(p -> {
 			editar.setId(id);
 			Producto saved = productoRepositorio.save(editar);
 			if(saved != null) {
-				return ResponseEntity.ok(saved);
-			} else {
-				return ResponseEntity.noContent().build();
+				return dtoConverter.convertToDto(saved);
 			}
-		}).orElseGet(() -> { return ResponseEntity.notFound().build(); });
+			return null;
+		}).orElseThrow(() ->  new ProductoNotFoundException(id));
 	}
 
 	/**
@@ -119,9 +124,10 @@ public class ProductoController {
 	 */
 	@DeleteMapping("/producto/{id}")
 	public ResponseEntity<?> borrarProducto(@PathVariable Long id) {
-		Producto p = productoRepositorio.findById(id).orElse(null);
+		Producto p = productoRepositorio.findById(id).orElseThrow(() -> new ProductoNotFoundException(id));
 		productoRepositorio.deleteById(id);
 		return ResponseEntity.noContent().build();
 	}
+
 
 }
