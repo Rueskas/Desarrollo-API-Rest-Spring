@@ -1,0 +1,5 @@
+INDEX VERSION 1.131+C:\Users\Ruesk\Documents\2 DAM\FTC\Curso Desarrollo API Rest Spring\.metadata\.plugins\org.eclipse.jdt.core
+1518417069.index
+3435648363.index
+436242947.index
+996373061.index

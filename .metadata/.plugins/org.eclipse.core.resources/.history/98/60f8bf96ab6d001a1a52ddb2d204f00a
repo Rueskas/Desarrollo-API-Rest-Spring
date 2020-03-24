@@ -1,0 +1,5 @@
+package com.iessanvicente.rest.models;
+
+public interface CategoriaRepositorio extends JpaRepository<Categoria, Long> {
+
+}

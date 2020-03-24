@@ -1,0 +1,13 @@
+package com.iessanvicente.rest.error;
+
+public class ProductoNotFoundException extends RuntimeException {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3863739378913611710L;
+
+	public ProductoNotFoundException(Long id) {
+		super("No encontrado el producto con id: " + id);
+	}
+}

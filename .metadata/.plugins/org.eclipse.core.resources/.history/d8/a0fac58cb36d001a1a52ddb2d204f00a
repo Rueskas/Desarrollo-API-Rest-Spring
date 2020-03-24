@@ -1,0 +1,28 @@
+package com.iessanvicente.rest.error;
+
+import java.time.LocalDateTime;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+@RestControllerAdvice
+public class GlobalControllerAdvice {
+	
+	@ExceptionHandler(ProductoNotFoundException.class)
+	public ResponseEntity<ApiError> handleProductoNorFoundException(ProductoNotFoundException e){
+		ApiError error = new ApiError(HttpStatus.NOT_FOUND, LocalDateTime.now(), e.getMessage());
+		
+		return ResponseEntity.status(error.getEstado()).body(error);
+	}
+	
+	@ExceptionHandler(JsonMappingException.class)
+	public ResponseEntity<ApiError> handleMappingJsonException(JsonMappingException e){
+		ApiError error = new ApiError(HttpStatus.BAD_REQUEST, LocalDateTime.now(), e.getMessage());
+		
+		return ResponseEntity.status(error.getEstado()).body(error);
+	}
+}

@@ -1,0 +1,5 @@
+package com.iessanvicente.rest.controllers;
+
+public class CategoriaController {
+
+}

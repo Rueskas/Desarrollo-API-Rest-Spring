@@ -1,0 +1,29 @@
+package com.iessanvicente.rest.controllers;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.iessanvicente.rest.error.CategoriaNotFoundException;
+import com.iessanvicente.rest.models.Categoria;
+import com.iessanvicente.rest.models.CategoriaRepositorio;
+
+
+@RestController
+public class CategoriaController {
+
+	@Autowired
+	CategoriaRepositorio categoriaRepositorio;
+	
+	@GetMapping("/categoria")
+	public List<Categoria> categorias(){
+		List<Categoria> categorias = categoriaRepositorio.findAll();
+		if(categorias.isEmpty()) {
+			throw new CategoriaNotFoundException(null);
+		} else {
+			return categorias;
+		}
+	}
+}

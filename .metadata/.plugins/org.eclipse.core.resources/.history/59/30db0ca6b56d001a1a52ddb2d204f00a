@@ -1,0 +1,18 @@
+package com.iessanvicente.rest.error;
+
+import java.util.Map;
+
+import org.springframework.boot.web.reactive.error.DefaultErrorAttributes;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.function.ServerRequest;
+
+@Component
+public class ApiErrorAttributes extends DefaultErrorAttributes {
+
+	@Override
+	public Map<String, Object> getErrorAttributes(
+			ServerRequest request, boolean includeStackTrace) {
+		// TODO Auto-generated method stub
+		return super.getErrorAttributes(request, includeStackTrace);
+	}
+}

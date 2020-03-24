@@ -1,0 +1,5 @@
+package com.iessanvicente.rest.error;
+
+public class ApiErrorAttributes {
+
+}

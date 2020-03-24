@@ -1,0 +1,8 @@
+package com.iessanvicente.rest.error;
+
+public class ProductoNotFoundException extends RuntimeException {
+
+	public ProductoNotFoundException() {
+		// TODO Auto-generated constructor stub
+	}
+}
