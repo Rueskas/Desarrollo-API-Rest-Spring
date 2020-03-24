@@ -1,8 +1,11 @@
 package com.iessanvicente.rest.controllers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.iessanvicente.rest.converter.ProductoDTOConverter;
+import com.iessanvicente.rest.dto.CreateProductoDTO;
+import com.iessanvicente.rest.models.Categoria;
+import com.iessanvicente.rest.models.CategoriaRepositorio;
 import com.iessanvicente.rest.models.Producto;
 import com.iessanvicente.rest.models.ProductoRepositorio;
 
@@ -19,9 +26,13 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 public class ProductoController {
-
+	
+	@Autowired
+	private final ProductoDTOConverter dtoConverter;
 	@Autowired
 	private ProductoRepositorio productoRepositorio;
+	@Autowired
+	private CategoriaRepositorio categoriaRepositorio;
 
 	/**
 	 * Obtenemos todos los productos
@@ -29,8 +40,15 @@ public class ProductoController {
 	 * @return
 	 */
 	@GetMapping("/producto")
-	public List<Producto> obtenerTodos() {
-		return productoRepositorio.findAll();
+	public ResponseEntity<?> obtenerTodos() {
+		List<Producto> products = productoRepositorio.findAll();
+		if(products.isEmpty()) {
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok(products.stream()
+					.map(dtoConverter::convertToDto)
+					.collect(Collectors.toList()));
+		}
 	}
 
 	/**
@@ -40,8 +58,13 @@ public class ProductoController {
 	 * @return Null si no encuentra el producto
 	 */
 	@GetMapping("/producto/{id}")
-	public Producto obtenerUno(@PathVariable Long id) {
-		return productoRepositorio.findById(id).orElse(null);
+	public ResponseEntity<?> obtenerUno(@PathVariable Long id) {
+		Producto p = productoRepositorio.findById(id).orElse(null);
+		if(p == null) {
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok(dtoConverter.convertToDto(p));
+		}
 	}
 
 	/**
@@ -51,8 +74,23 @@ public class ProductoController {
 	 * @return producto insertado
 	 */
 	@PostMapping("/producto")
-	public Producto nuevoProducto(@RequestBody Producto nuevo) {
-		return productoRepositorio.save(nuevo);
+	public ResponseEntity<?> nuevoProducto(@RequestBody CreateProductoDTO nuevo) {
+		
+		if(categoriaRepositorio.existsById(nuevo.getCategoriaId())) {
+			Categoria c = categoriaRepositorio.findById(nuevo.getCategoriaId()).orElse(null);
+			
+			Producto p = new Producto(null, nuevo.getNombre(), nuevo.getPrecio(), c);
+			Producto result = productoRepositorio.save(p);
+			if(result != null) {
+				return ResponseEntity.status(HttpStatus.CREATED)
+						.body(dtoConverter.convertToDto(result));
+			} else {
+				return ResponseEntity.badRequest().build();
+			}
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+		
 	}
 
 	/**
@@ -62,13 +100,16 @@ public class ProductoController {
 	 * @return
 	 */
 	@PutMapping("/producto/{id}")
-	public Producto editarProducto(@RequestBody Producto editar, @PathVariable Long id) {
-		if(productoRepositorio.existsById(id)) {
+	public ResponseEntity<?> editarProducto(@RequestBody Producto editar, @PathVariable Long id) {
+		return productoRepositorio.findById(id).map(p -> {
 			editar.setId(id);
-			return productoRepositorio.save(editar);
-		} else {
-			return null;
-		}
+			Producto saved = productoRepositorio.save(editar);
+			if(saved != null) {
+				return ResponseEntity.ok(saved);
+			} else {
+				return ResponseEntity.noContent().build();
+			}
+		}).orElseGet(() -> { return ResponseEntity.notFound().build(); });
 	}
 
 	/**
@@ -77,10 +118,10 @@ public class ProductoController {
 	 * @return
 	 */
 	@DeleteMapping("/producto/{id}")
-	public Producto borrarProducto(@PathVariable Long id) {
+	public ResponseEntity<?> borrarProducto(@PathVariable Long id) {
 		Producto p = productoRepositorio.findById(id).orElse(null);
 		productoRepositorio.deleteById(id);
-		return p;
+		return ResponseEntity.noContent().build();
 	}
 
 }
