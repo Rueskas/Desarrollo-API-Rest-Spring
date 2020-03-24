@@ -9,4 +9,5 @@ public class ProductoDTO {
 	private String nombre;
 	private float precio;
 	private String nombreCategoria;
+	private String imagen;
 }
